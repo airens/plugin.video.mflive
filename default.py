@@ -56,10 +56,10 @@ def _http_get(url):
         print url
 
 
-LEAGUES = []
+def _load_leagues():
+    with open(os.path.join(__path__, 'leagues.pickle'), 'r') as f:
+        return pickle.load(f)
 
-with open(os.path.join(__path__, 'leagues.pickle'), 'rb') as f:
-    LEAGUES = pickle.load(f)
 
 
 plugin = Plugin()
@@ -85,10 +85,12 @@ def root():
 @plugin.action()
 def select_matches(params):
 
+    #leagues = _load_leagues()
+
     selected_leagues = _get_selected_leagues()
 
     result = xbmcgui.Dialog().multiselect(
-        'Выбор турнира', LEAGUES, preselect=selected_leagues)
+        'Выбор турнира', _load_leagues(), preselect=selected_leagues)
 
     if not result is None:
         if not len(result):
@@ -127,33 +129,33 @@ def get_matches():
         tbody = match_html.findAll('tbody')[1]
         image = tbody.contents[1].contents[1].contents[1]['src']
         icon = SITE + image
-        label = tbody.contents[1].contents[3].text
+        game = tbody.contents[1].contents[3].text
         league = tbody.contents[1].contents[1].contents[1]['title']
         dbg_log(image)
-        dbg_log(label.encode('utf-8'))
+        dbg_log(game.encode('utf-8'))
         dbg_log(league.encode('utf-8'))
         if not selected_leagues or not selected_leagues[0]:
             dbg_log('Фильтра нет')
         else:
+            leagues = _load_leagues()    
             try:
-                if not LEAGUES.index(league) in selected_leagues:
+                if not leagues.index(league) in selected_leagues:
                     continue
             except ValueError:
                 dbg_log('Добавим - %s - в список' % league.encode('utf-8'))
-                LEAGUES.append(league)
-                index = LEAGUES.index(league)
+                leagues.append(league)
+                index = leagues.index(league)
                 with open(os.path.join(__path__, 'leagues.pickle'), 'wt') as f:
-                    f.write(pickle.dumps(LEAGUES, 0))
+                    f.write(pickle.dumps(leagues, 0))
                 sl = _get_selected_leagues()
                 sl.append(index)
                 __addon__.setSetting('selected_leagues',
                                      ','.join(str(x) for x in sl))
 
-       
-        ic = os.path.join(__media__, league + '.png')
-        
-        if os.path.exists(ic.encode('utf-8')):
-            icon = ic
+      
+        # ic = os.path.join(__media__, league.encode('utf-8') + '.png')
+        # if os.path.exists(ic.decode('utf-8')):
+        #     icon = ic
 
         dts = tbody.contents[3].contents[1].contents[0].contents[1]['data-time']
         dt = dateutil.parser.parse(dts)
@@ -164,20 +166,17 @@ def get_matches():
 
         before_time = int((date_time - now_date).total_seconds()/60)
 
-        if before_time < -110:
-            status = 'FF999999'
-        elif before_time > 0:
-            status = 'FFFFFFFF'
-        else:
-            status = 'FFFF0000'
+        if before_time < -110: status = 'FF999999'
+        elif before_time > 0:  status = 'FFFFFFFF'
+        else: status = 'FFFF0000'
 
         label = '[COLOR %s]%s[/COLOR] - [B]%s[/B]  (%s)' % (
-            status.encode('utf-8'), date_time.strftime('%H:%M'), label.encode('utf-8'), league.encode('utf-8'))
-        plot = '[B][UPPERCASE]%s[/B][/UPPERCASE]\n%s\n' % (
-            date_time.strftime('%d %b %Y'), league.encode('utf-8'))
-        
+            status.encode('utf-8'), date_time.strftime('%H:%M'), game.encode('utf-8'), league.encode('utf-8'))
+        plot = '[B][UPPERCASE]%s[/B][/UPPERCASE]\n%s\n%s' % (
+            date_time.strftime('%H:%M - %d.%m.%Y'), league.encode('utf-8'), game.encode('utf-8'))
+        icon = os.path.join(__path__, 'icon.png')
         matches.append({'label': label,
-                        'thumb': icon,
+                        #'thumb': icon,
                         #'fanart': icon,
                         'info': {'video': {'title': plot, 'plot': plot}},
                         'icon': icon,
@@ -227,8 +226,8 @@ def get_links(params):
     dbg_log(type(icon2))
     dbg_log(type(command2))
 
-    plot = '%s\n%s\n%s - %s' % (span_soup[0].text,
-                                 span_soup[1].text, command1, command2)
+    plot = '%s\n%s\n%s - %s' % (span_soup[0].text.encode('utf-8'),
+                                 span_soup[1].text.encode('utf-8'), command1.encode('utf-8'), command2.encode('utf-8'))
 
     list_link_stream_soup = soup.findAll(
         'table', {'class': 'list-link-stream'})
