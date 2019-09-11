@@ -88,7 +88,7 @@ def select_matches(params):
     selected_leagues = _get_selected_leagues()
 
     result = xbmcgui.Dialog().multiselect(
-        u'Выбор турнира', LEAGUES, preselect=selected_leagues)
+        'Выбор турнира', LEAGUES, preselect=selected_leagues)
 
     if not result is None:
         if not len(result):
@@ -130,8 +130,8 @@ def get_matches():
         label = tbody.contents[1].contents[3].text
         league = tbody.contents[1].contents[1].contents[1]['title']
         dbg_log(image)
-        dbg_log(label.encode('utf8'))
-        dbg_log(league.encode('utf8'))
+        dbg_log(label.encode('utf-8'))
+        dbg_log(league.encode('utf-8'))
         if not selected_leagues or not selected_leagues[0]:
             dbg_log('Фильтра нет')
         else:
@@ -139,7 +139,7 @@ def get_matches():
                 if not LEAGUES.index(league) in selected_leagues:
                     continue
             except ValueError:
-                dbg_log('Добавим - %s - в список' % league.encode('utf8'))
+                dbg_log('Добавим - %s - в список' % league.encode('utf-8'))
                 LEAGUES.append(league)
                 index = LEAGUES.index(league)
                 with open(os.path.join(__path__, 'leagues.pickle'), 'wt') as f:
@@ -171,10 +171,10 @@ def get_matches():
         else:
             status = 'FFFF0000'
 
-        label = u'[COLOR %s]%s[/COLOR] - [B]%s[/B]  (%s)' % (
-            status, date_time.strftime('%H:%M').decode('utf8'), label, league)
-        plot = u'[B][UPPERCASE]%s[/B][/UPPERCASE]\n%s\n' % (
-            date_time.strftime('%d %b %Y').decode('utf8'), league)
+        label = '[COLOR %s]%s[/COLOR] - [B]%s[/B]  (%s)' % (
+            status.encode('utf-8'), date_time.strftime('%H:%M'), label.encode('utf-8'), league.encode('utf-8'))
+        plot = '[B][UPPERCASE]%s[/B][/UPPERCASE]\n%s\n' % (
+            date_time.strftime('%d %b %Y'), league.encode('utf-8'))
         
         matches.append({'label': label,
                         'thumb': icon,
@@ -222,12 +222,12 @@ def get_links(params):
         icon2 = stream_full2_soup.contents[0]['src']
         command2 = stream_full2_soup.contents[0]['title']
 
-    dbg_log(icon1.encode('utf8'))
-    dbg_log(command1.encode('utf8'))
-    dbg_log(icon2.encode('utf8'))
-    dbg_log(command2.encode('utf8'))
+    dbg_log(icon1.encode('utf-8'))
+    dbg_log(command1.encode('utf-8'))
+    dbg_log(type(icon2))
+    dbg_log(type(command2))
 
-    plot = u'%s\n%s\n%s - %s' % (span_soup[0].text,
+    plot = '%s\n%s\n%s - %s' % (span_soup[0].text,
                                  span_soup[1].text, command1, command2)
 
     list_link_stream_soup = soup.findAll(
@@ -273,7 +273,7 @@ def get_links(params):
                 i2 = html_frame.find('\'', i1 + 1)
                 href = html_frame[i1+1:i2]
                 urlprs = urlparse(href)
-                matches.append({'label': u'%s - прямая ссылка на видео...' % urlprs.scheme,
+                matches.append({'label': '%s - прямая ссылка на видео...' % urlprs.scheme,
                                 'info': {'video': {'title': command1 + ' - ' + command2, 'plot': plot}},
                                 'thumb': os.path.join(__media__, 'http.png'),
                                 'icon': os.path.join(__media__, 'http.png'),
@@ -283,7 +283,7 @@ def get_links(params):
                 dbg_log(matches[-1])
 
     if not matches:
-        matches.append({'label': u'Ссылок на трансляции нет, возможно появятся позже!',
+        matches.append({'label': 'Ссылок на трансляции нет, возможно появятся позже!',
                         'info': {'video': {'title': '', 'plot': ''}},
                         # 'thumb': icon2,
                         #'icon': params['image'],
