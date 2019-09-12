@@ -1,26 +1,23 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from simpleplugin import Plugin
+import xbmcplugin
+import xbmcgui
+import xbmcaddon
+import xbmc
+import BeautifulSoup
+from dateutil.tz import tzlocal, tzoffset
+import dateutil.parser
+import urllib2
+from urlparse import urlparse
+from datetime import datetime
+import pickle
+import os
+import datetime
 
 import locale
 locale.setlocale(locale.LC_ALL, '')
-
-import datetime
-import os
-import pickle
-from datetime import datetime
-from urlparse import urlparse
-import urllib2
-
-import dateutil.parser
-from dateutil.tz import tzlocal, tzoffset
-
-import BeautifulSoup
-import xbmc
-import xbmcaddon
-import xbmcgui
-import xbmcplugin
-from simpleplugin import Plugin
 
 
 ID_PLUGIN = 'plugin.video.mflive'
@@ -28,11 +25,10 @@ ID_PLUGIN = 'plugin.video.mflive'
 __addon__ = xbmcaddon.Addon(id=ID_PLUGIN)
 __path__ = __addon__.getAddonInfo('path')
 __version__ = __addon__.getAddonInfo('version')
-__media__ = os.path.join( __path__,'resources', 'media')
+__media__ = os.path.join(__path__, 'resources', 'media')
 
 
 SITE = __addon__.getSetting('url_site')
-
 
 
 def dbg_log(line):
@@ -69,6 +65,29 @@ def _load_leagues():
             return pickle.load(f)
 
 
+def _load_leagues_image():
+
+    html = _http_get(SITE + '/index/0-2')
+
+    soup = BeautifulSoup.BeautifulSoup(html)
+
+    league_pictures = []
+
+    matches_records_page = soup.find(
+        'table', {'class': 'matches-records-page'})
+
+    if matches_records_page:
+        tags_a = matches_records_page.findAll('a')
+        for a in tags_a:
+            src = SITE + dict(a.contents[0].attrs)['src'].encode('utf-8')
+            # dbg_log(src)
+            # dbg_log(type(src))
+            # dbg_log(repr(src))
+            league_pictures.append(dict(league=a.parent.contents[2].text.encode('utf8'),
+                                        src=src))
+
+    return league_pictures
+
 
 plugin = Plugin()
 
@@ -93,8 +112,6 @@ def root():
 @plugin.action()
 def select_matches(params):
 
-    #leagues = _load_leagues()
-
     selected_leagues = _get_selected_leagues()
 
     result = xbmcgui.Dialog().multiselect(
@@ -112,9 +129,10 @@ def select_matches(params):
         root()
 
 
-@plugin.cached(20)
+@plugin.cached(5)
 def get_matches():
     leagues = _load_leagues()
+    LEAGUES_IMAGE = _load_leagues_image()
     selected_leagues = _get_selected_leagues()
     html = _http_get(SITE)
     matches = []
@@ -122,7 +140,7 @@ def get_matches():
     tzs = int(__addon__.getSetting('time_zone_site'))
 #    tzl = 2
 
-    now_date = datetime.now().replace(tzinfo=tzlocal())
+    now_date = datetime.datetime.now().replace(tzinfo=tzlocal())
     soup = BeautifulSoup.BeautifulSoup(html)
     days = soup.findAll('div', {'class': 'rewievs_tab1'})
 
@@ -136,13 +154,11 @@ def get_matches():
         urls.add(url)
 
         tbody = match_html.findAll('tbody')[1]
-        image = tbody.contents[1].contents[1].contents[1]['src'].encode(
-            'utf-8')
-        icon = SITE + image
+        #image = tbody.contents[1].contents[1].contents[1]['src'].encode('utf-8')
+        #icon = SITE + image
         game = tbody.contents[1].contents[3].text.encode('utf-8')
         league = tbody.contents[1].contents[1].contents[1]['title'].encode(
             'utf-8')
-        dbg_log(image)
         dbg_log(game)
         dbg_log(league)
         if league not in leagues:
@@ -153,18 +169,13 @@ def get_matches():
                 f.write(pickle.dumps(leagues, 0))
             sl = _get_selected_leagues()
             sl.append(index)
-            __addon__.setSetting('selected_leagues', ','.join(str(x) for x in sl))
+            __addon__.setSetting('selected_leagues',
+                                 ','.join(str(x) for x in sl))
         if not selected_leagues or not selected_leagues[0]:
             dbg_log('Фильтра нет')
         else:
             if not leagues.index(league) in selected_leagues:
                 continue
-            
-
-      
-        # ic = os.path.join(__media__, league.encode('utf-8') + '.png')
-        # if os.path.exists(ic.decode('utf-8')):
-        #     icon = ic
 
         dts = tbody.contents[3].contents[1].contents[0].contents[1]['data-time']
         dt = dateutil.parser.parse(dts)
@@ -175,18 +186,27 @@ def get_matches():
 
         before_time = int((date_time - now_date).total_seconds()/60)
 
-        if before_time < -110: status = 'FF999999'
-        elif before_time > 0:  status = 'FFFFFFFF'
-        else: status = 'FFFF0000'
+        if before_time < -110:
+            status = 'FF999999'
+        elif before_time > 0:
+            status = 'FFFFFFFF'
+        else:
+            status = 'FFFF0000'
 
         label = '[COLOR %s]%s[/COLOR] - [B]%s[/B]  (%s)' % (
             status, date_time.strftime('%H:%M'), game, league)
         plot = '[B][UPPERCASE]%s[/B][/UPPERCASE]\n%s\n%s' % (
             date_time.strftime('%H:%M - %d.%m.%Y'), league, game)
+
         icon = os.path.join(__path__, 'icon.png')
+
+        for league_pictures in LEAGUES_IMAGE:
+            if league_pictures['league'].strip() == league.decode('utf-8').upper().encode('utf-8'):
+                icon = league_pictures['src']
+
         matches.append({'label': label,
-                        #'thumb': icon,
-                        #'fanart': icon,
+                        # 'thumb': icon,
+                        # 'fanart': icon,
                         'info': {'video': {'title': plot, 'plot': plot}},
                         'icon': icon,
                         'url': plugin.get_url(action='get_links', url=url, image=icon)})
@@ -236,7 +256,7 @@ def get_links(params):
     dbg_log(type(command2))
 
     plot = '%s\n%s\n%s - %s' % (span_soup[0].text.encode('utf-8'),
-                                 span_soup[1].text.encode('utf-8'), command1, command2)
+                                span_soup[1].text.encode('utf-8'), command1, command2)
 
     list_link_stream_soup = soup.findAll(
         'table', {'class': 'list-link-stream'})
@@ -249,8 +269,8 @@ def get_links(params):
             'span', {'class': 'links-font'})
 
         for link_soup in links_font_soup:
-            bit_rate=link_soup.text.split('-')[1].strip().encode('utf-8')
-            href=link_soup.contents[0]['href'].encode('utf-8')
+            bit_rate = link_soup.text.split('-')[1].strip().encode('utf-8')
+            href = link_soup.contents[0]['href'].encode('utf-8')
 
             urlprs = urlparse(href)
 
@@ -264,9 +284,9 @@ def get_links(params):
             matches.append({'label': '%s - %s' % (urlprs.scheme, bit_rate),
                             'info': {'video': {'title': command1 + ' - ' + command2, 'plot': plot}},
                             'thumb': icon,
-                            'icon': os.path.join(__media__, 'm.png'),
-                            #  'fanart': os.path.join(__path__, 'fanart.jpg'),
-                            'art': {'clearart': os.path.join(__media__, 'm.png')},
+                            'icon': icon,
+                            'fanart': params['image'],
+                            'art': {'clearart': params['image']},
                             'url': plugin.get_url(action='play', url=href),
                             'is_playable': True})
             dbg_log(matches[-1])
@@ -285,7 +305,8 @@ def get_links(params):
                                 'info': {'video': {'title': command1 + ' - ' + command2, 'plot': plot}},
                                 'thumb': os.path.join(__media__, 'http.png'),
                                 'icon': os.path.join(__media__, 'http.png'),
-                                # 'fanart': os.path.join(__path__, 'fanart.jpg'),
+                                'fanart': params['image'],
+                                'art': {'clearart': params['image']},
                                 'url': plugin.get_url(action='play', url=href),
                                 'is_playable': True})
                 dbg_log(matches[-1])
@@ -294,7 +315,7 @@ def get_links(params):
         matches.append({'label': 'Ссылок на трансляции нет, возможно появятся позже!',
                         'info': {'video': {'title': '', 'plot': ''}},
                         # 'thumb': icon2,
-                        #'icon': params['image'],
+                        # 'icon': params['image'],
                         'art': {'clearart': ''},
                         'url': plugin.get_url(action='play', url='https://www.ixbt.com/multimedia/video-methodology/camcorders-and-others/htc-one-x-avc-baseline@l3.2-1280x720-variable-fps-aac-2ch.mp4'),
                         'is_playable': True})
