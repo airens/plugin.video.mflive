@@ -57,8 +57,16 @@ def _http_get(url):
 
 
 def _load_leagues():
-    with open(os.path.join(__path__, 'leagues.pickle'), 'r') as f:
-        return pickle.load(f)
+    file_pickle = os.path.join(__path__, 'leagues.pickle')
+    if os.path.exists(file_pickle):
+        with open(file_pickle, 'r') as f:
+            return pickle.load(f)
+    else:
+        data = ['Все', ]
+        with open(file_pickle, 'wt') as f:
+            f.write(pickle.dumps(data, 0))
+        with open(file_pickle, 'r') as f:
+            return pickle.load(f)
 
 
 
@@ -106,6 +114,7 @@ def select_matches(params):
 
 @plugin.cached(20)
 def get_matches():
+    leagues = _load_leagues()
     selected_leagues = _get_selected_leagues()
     html = _http_get(SITE)
     matches = []
@@ -127,30 +136,30 @@ def get_matches():
         urls.add(url)
 
         tbody = match_html.findAll('tbody')[1]
-        image = tbody.contents[1].contents[1].contents[1]['src']
+        image = tbody.contents[1].contents[1].contents[1]['src'].encode(
+            'utf-8')
         icon = SITE + image
-        game = tbody.contents[1].contents[3].text
-        league = tbody.contents[1].contents[1].contents[1]['title']
+        game = tbody.contents[1].contents[3].text.encode('utf-8')
+        league = tbody.contents[1].contents[1].contents[1]['title'].encode(
+            'utf-8')
         dbg_log(image)
-        dbg_log(game.encode('utf-8'))
-        dbg_log(league.encode('utf-8'))
+        dbg_log(game)
+        dbg_log(league)
+        if league not in leagues:
+            dbg_log('*** Добавим - %s - в список' % league)
+            leagues.append(league)
+            index = leagues.index(league)
+            with open(os.path.join(__path__, 'leagues.pickle'), 'wt') as f:
+                f.write(pickle.dumps(leagues, 0))
+            sl = _get_selected_leagues()
+            sl.append(index)
+            __addon__.setSetting('selected_leagues', ','.join(str(x) for x in sl))
         if not selected_leagues or not selected_leagues[0]:
             dbg_log('Фильтра нет')
         else:
-            leagues = _load_leagues()    
-            try:
-                if not leagues.index(league) in selected_leagues:
-                    continue
-            except ValueError:
-                dbg_log('Добавим - %s - в список' % league.encode('utf-8'))
-                leagues.append(league)
-                index = leagues.index(league)
-                with open(os.path.join(__path__, 'leagues.pickle'), 'wt') as f:
-                    f.write(pickle.dumps(leagues, 0))
-                sl = _get_selected_leagues()
-                sl.append(index)
-                __addon__.setSetting('selected_leagues',
-                                     ','.join(str(x) for x in sl))
+            if not leagues.index(league) in selected_leagues:
+                continue
+            
 
       
         # ic = os.path.join(__media__, league.encode('utf-8') + '.png')
@@ -171,9 +180,9 @@ def get_matches():
         else: status = 'FFFF0000'
 
         label = '[COLOR %s]%s[/COLOR] - [B]%s[/B]  (%s)' % (
-            status.encode('utf-8'), date_time.strftime('%H:%M'), game.encode('utf-8'), league.encode('utf-8'))
+            status, date_time.strftime('%H:%M'), game, league)
         plot = '[B][UPPERCASE]%s[/B][/UPPERCASE]\n%s\n%s' % (
-            date_time.strftime('%H:%M - %d.%m.%Y'), league.encode('utf-8'), game.encode('utf-8'))
+            date_time.strftime('%H:%M - %d.%m.%Y'), league, game)
         icon = os.path.join(__path__, 'icon.png')
         matches.append({'label': label,
                         #'thumb': icon,
@@ -212,27 +221,27 @@ def get_links(params):
     stream_full_soup = stream_full_table_soup.find(
         'td', {'class': 'stream-full'})
     if stream_full_soup:
-        icon1 = stream_full_soup.contents[0]['src']
-        command1 = stream_full_soup.contents[0]['title']
+        icon1 = stream_full_soup.contents[0]['src'].encode('utf-8')
+        command1 = stream_full_soup.contents[0]['title'].encode('utf-8')
 
     stream_full2_soup = stream_full_table_soup.find(
         'td', {'class': 'stream-full2'})
     if stream_full2_soup:
-        icon2 = stream_full2_soup.contents[0]['src']
-        command2 = stream_full2_soup.contents[0]['title']
+        icon2 = stream_full2_soup.contents[0]['src'].encode('utf-8')
+        command2 = stream_full2_soup.contents[0]['title'].encode('utf-8')
 
-    dbg_log(icon1.encode('utf-8'))
-    dbg_log(command1.encode('utf-8'))
+    dbg_log(icon1)
+    dbg_log(command1)
     dbg_log(type(icon2))
     dbg_log(type(command2))
 
     plot = '%s\n%s\n%s - %s' % (span_soup[0].text.encode('utf-8'),
-                                 span_soup[1].text.encode('utf-8'), command1.encode('utf-8'), command2.encode('utf-8'))
+                                 span_soup[1].text.encode('utf-8'), command1, command2)
 
     list_link_stream_soup = soup.findAll(
         'table', {'class': 'list-link-stream'})
 
-    #xbmcgui.Dialog().notification(u'Проверка ссылок:', command1 + ' - ' + command2, xbmcgui.NOTIFICATION_INFO, 5000)
+    #xbmcgui.Dialog().notification('Проверка ссылок:', command1 + ' - ' + command2, xbmcgui.NOTIFICATION_INFO, 5000)
 
     if list_link_stream_soup:
 
@@ -240,8 +249,8 @@ def get_links(params):
             'span', {'class': 'links-font'})
 
         for link_soup in links_font_soup:
-            bit_rate = link_soup.text.split('-')[1].strip()
-            href = link_soup.contents[0]['href']
+            bit_rate=link_soup.text.split('-')[1].strip().encode('utf-8')
+            href=link_soup.contents[0]['href'].encode('utf-8')
 
             urlprs = urlparse(href)
 
