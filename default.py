@@ -230,7 +230,7 @@ def get_matches():
     return matches
 
 
-@plugin.cached(10)
+@plugin.cached(5)
 @plugin.action()
 def get_links(params):
 
