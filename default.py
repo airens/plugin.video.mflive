@@ -171,11 +171,12 @@ def get_matches():
             sl.append(index)
             __addon__.setSetting('selected_leagues',
                                  ','.join(str(x) for x in sl))
-        if not selected_leagues or not selected_leagues[0]:
-            dbg_log('Фильтра нет')
         else:
-            if not leagues.index(league) in selected_leagues:
-                continue
+            if not selected_leagues or not selected_leagues[0]:
+                dbg_log('Фильтра нет')
+            else:
+                if not leagues.index(league) in selected_leagues:
+                    continue
 
         dts = tbody.contents[3].contents[1].contents[0].contents[1]['data-time']
         dt = dateutil.parser.parse(dts)
