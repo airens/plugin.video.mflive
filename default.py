@@ -270,7 +270,7 @@ def get_links(params):
     dbg_log(type(icon2))
     dbg_log(type(command2))
 
-    plot = '%s\n%s\n%s - %s' % (span_soup[0].text.encode('utf-8'),
+    plot_base = '%s\n%s\n%s - %s' % (span_soup[0].text.encode('utf-8'),
                                 span_soup[1].text.encode('utf-8'), command1, command2)
 
     list_link_stream_soup = soup.findAll(
@@ -289,10 +289,13 @@ def get_links(params):
 
             urlprs = urlparse(href)
 
+            plot = plot_base
+
             if urlprs.scheme == 'acestream':
                 icon = os.path.join(__media__, 'ace.png')
             elif urlprs.scheme == 'sop':
                 icon = os.path.join(__media__, 'sop.png')
+                plot = plot_base + '\n\n\nДля просмотра SopCast необходим плагин Plexus'
             else:
                 icon = os.path.join(__media__, 'http.png')
 
@@ -305,6 +308,8 @@ def get_links(params):
                             'url': plugin.get_url(action='play', url=href),
                             'is_playable': True})
             dbg_log(matches[-1])
+
+    plot = plot_base
 
     iframe_soup = soup.findAll('iframe', {'rel': "nofollow"})
     for s in iframe_soup:
