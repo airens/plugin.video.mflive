@@ -98,6 +98,19 @@ def _get_selected_leagues():
         sl = '0'
     return map(lambda x: int(x), sl.split(','))
 
+def _upper(t):    
+    RUS={"А":"а", "Б":"б", "В":"в", "Г":"г", "Д":"д", "Е":"е", "Ё":"ё", 
+        "Ж":"ж", "З":"з", "И":"и", "Й":"й", "К":"к", "Л":"л", "М":"м", 
+        "Н":"н", "О":"о", "П":"п", "Р":"р", "С":"с", "Т":"т", "У":"у", 
+        "Ф":"ф", "Х":"х", "Ц":"ц", "Ч":"ч", "Ш":"ш", "Щ":"щ", "Ъ":"ъ", 
+        "Ы":"ы", "Ь":"ь", "Э":"э", "Ю":"ю", "Я":"я"}
+
+    for i in RUS.keys():
+        t = t.replace(RUS[i],i)
+    for i in range (65, 90):
+        t = t.replace(chr(i+32),chr(i))
+    return t    
+
 
 @plugin.action()
 def root():
@@ -202,12 +215,13 @@ def get_matches():
         icon = os.path.join(__path__, 'icon.png')
 
         for league_pictures in LEAGUES_IMAGE:
-            if league_pictures['league'].strip() == league.decode('utf-8').upper().encode('utf-8'):
+            #if league_pictures['league'].strip() == league.decode('utf-8').upper().encode('utf-8'):
+            if league_pictures['league'] == _upper(league):
                 icon = league_pictures['src']
 
         matches.append({'label': label,
-                        # 'thumb': icon,
-                        # 'fanart': icon,
+                        'thumb': icon,
+                        'fanart': os.path.join(__path__ , 'fanart.jpg'),
                         'info': {'video': {'title': plot, 'plot': plot}},
                         'icon': icon,
                         'url': plugin.get_url(action='get_links', url=url, image=icon)})
