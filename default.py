@@ -58,7 +58,7 @@ def _load_leagues():
         with open(file_pickle, 'r') as f:
             return pickle.load(f)
     else:
-        data = ['Все', ]
+        data = ['ВСЕ', ]
         with open(file_pickle, 'wt') as f:
             f.write(pickle.dumps(data, 0))
         with open(file_pickle, 'r') as f:
@@ -142,7 +142,7 @@ def select_matches(params):
         root()
 
 
-@plugin.cached(5)
+@plugin.cached(10)
 def get_matches():
     leagues = _load_leagues()
     LEAGUES_IMAGE = _load_leagues_image()
@@ -170,8 +170,8 @@ def get_matches():
         #image = tbody.contents[1].contents[1].contents[1]['src'].encode('utf-8')
         #icon = SITE + image
         game = tbody.contents[1].contents[3].text.encode('utf-8')
-        league = tbody.contents[1].contents[1].contents[1]['title'].encode(
-            'utf-8')
+        league = _upper(tbody.contents[1].contents[1].contents[1]['title'].encode(
+            'utf-8'))
         dbg_log(game)
         dbg_log(league)
         if league not in leagues:
@@ -207,7 +207,7 @@ def get_matches():
         else:
             status = 'FFFF0000'
 
-        label = '[COLOR %s]%s[/COLOR] - [B]%s[/B]  (%s)' % (
+        label = '[COLOR %s]%s[/COLOR] - [B]%s[/B]     %s' % (
             status, date_time.strftime('%H:%M'), game, league)
         plot = '[B][UPPERCASE]%s[/B][/UPPERCASE]\n%s\n%s' % (
             date_time.strftime('%H:%M - %d.%m.%Y'), league, game)
@@ -216,7 +216,7 @@ def get_matches():
 
         for league_pictures in LEAGUES_IMAGE:
             #if league_pictures['league'].strip() == league.decode('utf-8').upper().encode('utf-8'):
-            if league_pictures['league'] == _upper(league):
+            if league_pictures['league'] == league:
                 icon = league_pictures['src']
 
         matches.append({'label': label,

@@ -7,7 +7,7 @@
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
     <summary>FootballLive</summary>
-    <description>Ссылки на прямые трансляции футбольных матчей (https://myfootball.top) </description>
+    <description>Ссылки на прямые трансляции футбольных матчей (https://myfootball.top). Kodi 17 и выше.</description>
     <platform>all</platform>
   </extension>
   <assets>
