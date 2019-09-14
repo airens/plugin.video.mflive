@@ -7,7 +7,10 @@
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
     <summary>FootballLive</summary>
-    <description>Ссылки на прямые трансляции футбольных матчей (https://myfootball.top). Kodi 17 и выше.</description>
+    <description>Ссылки на прямые трансляции футбольных матчей (https://myfootball.top).\n
+Kodi 17 и выше.\n
+Ссылки Sopcast только с использованием плагина Plexus (https://github.com/tvaddonsco/program.plexus)
+</description>
     <platform>all</platform>
   </extension>
   <assets>
