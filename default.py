@@ -65,7 +65,7 @@ def _load_leagues():
             return pickle.load(f)
 
 
-def _load_leagues_image():
+def _load_league_image():
 
     html = _http_get(SITE + '/index/0-2')
 
@@ -154,7 +154,7 @@ def select_matches(params):
 @plugin.cached(30)
 def get_matches():
     leagues = _load_leagues()
-    LEAGUES_IMAGE = _load_leagues_image()
+    league_image = _load_league_image()
     selected_leagues = _get_selected_leagues()
     html = _http_get(SITE)
     matches = []
@@ -223,7 +223,7 @@ def get_matches():
 
         icon = os.path.join(__path__, 'icon.png')
 
-        for league_pictures in LEAGUES_IMAGE:
+        for league_pictures in league_image:
             if league_pictures['league'] == league:
                 icon = league_pictures['src']
 
@@ -239,7 +239,7 @@ def get_matches():
 
 
 #@plugin.cached(__addon__.getSetting('time_caching_links'))
-@plugin.cached(30)
+#@plugin.cached(30)
 @plugin.action()
 def get_links(params):
 
