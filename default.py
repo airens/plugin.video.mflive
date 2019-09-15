@@ -46,7 +46,7 @@ def _http_get(url):
         resp = urllib2.urlopen(req)
         http = resp.read()
         resp.close()
-        return http
+        return html
     except Exception, e:
         print('[%s]: GET EXCEPT [%s]' % (ID_PLUGIN, e), 4)
         print url
@@ -272,40 +272,33 @@ def get_links(params):
                                      span_soup[1].text.encode('utf-8'), command1, command2)
 
     if __addon__.getSetting('is_http_acesop') == 'true':
-        list_link_stream_soup = soup.findAll(
-            'table', {'class': 'list-link-stream'})
-
         #xbmcgui.Dialog().notification('Проверка ссылок:', command1 + ' - ' + command2, xbmcgui.NOTIFICATION_INFO, 5000)
+        links_font_soup = soup.findAll('span', {'class': 'links-font'})
 
-        if list_link_stream_soup:
+        for link_soup in links_font_soup:
+            bit_rate = link_soup.text.split('-')[1].strip().encode('utf-8')
+            href = link_soup.contents[0]['href'].encode('utf-8')
 
-            links_font_soup = list_link_stream_soup[0].findAll(
-                'span', {'class': 'links-font'})
+            urlprs = urlparse(href)
 
-            for link_soup in links_font_soup:
-                bit_rate = link_soup.text.split('-')[1].strip().encode('utf-8')
-                href = link_soup.contents[0]['href'].encode('utf-8')
+            plot = plot_base
 
-                urlprs = urlparse(href)
+            if urlprs.scheme == 'acestream':
+                icon = os.path.join(__media__, 'ace.png')
+            elif urlprs.scheme == 'sop':
+                icon = os.path.join(__media__, 'sop.png')
+                plot = plot_base + '\n\n\nДля просмотра SopCast необходим плагин Plexus'
+            else:
+                icon = os.path.join(__media__, 'http.png')
 
-                plot = plot_base
-
-                if urlprs.scheme == 'acestream':
-                    icon = os.path.join(__media__, 'ace.png')
-                elif urlprs.scheme == 'sop':
-                    icon = os.path.join(__media__, 'sop.png')
-                    plot = plot_base + '\n\n\nДля просмотра SopCast необходим плагин Plexus'
-                else:
-                    icon = os.path.join(__media__, 'http.png')
-
-                matches.append({'label': '%s - %s' % (urlprs.scheme, bit_rate),
-                                'info': {'video': {'title': command1 + ' - ' + command2, 'plot': plot}},
-                                'thumb': icon,
-                                'icon': icon,
-                                'fanart': params['image'],
-                                'art': {'clearart': params['image']},
-                                'url': plugin.get_url(action='play', url=href),
-                                'is_playable': True})
+            matches.append({'label': '%s - %s' % (urlprs.scheme, bit_rate),
+                            'info': {'video': {'title': command1 + ' - ' + command2, 'plot': plot}},
+                            'thumb': icon,
+                            'icon': icon,
+                            'fanart': params['image'],
+                            'art': {'clearart': params['image']},
+                            'url': plugin.get_url(action='play', url=href),
+                            'is_playable': True})
 
     plot = plot_base
 
