@@ -106,14 +106,24 @@ def _upper(t):
         t = t.replace(RUS[i],i)
     for i in range (65, 90):
         t = t.replace(chr(i+32),chr(i))
-    return t    
+    return t
+
+@plugin.action()
+def update_cache():
+    cache_file = os.path.join(xbmc.translatePath(
+        __addon__.getAddonInfo('profile')), '__cache__.pcl')
+    if os.path.exists(cache_file):
+        os.remove(cache_file)
+    root()
 
 
 @plugin.action()
 def root():
     matches = get_matches()
     select_item = [{'label': '[COLOR FF0084FF][B]ВЫБРАТЬ ТУРНИРЫ[/B][/COLOR]',
-                    'url': plugin.get_url(action='select_matches')}, ]
+                    'url': plugin.get_url(action='select_matches')},
+                    {'label': '[COLOR FF0084FF][B]ОБНОВИТЬ[/B][/COLOR]',
+                    'url': plugin.get_url(action='update_cache')}, ]
     # return plugin.create_listing(select_item + matches, content='tvseries',
     #                              view_mode=55, sort_methods={'sortMethod': xbmcplugin.SORT_METHOD_NONE, 'label2Mask': '% J'})
     return select_item + matches
@@ -132,14 +142,16 @@ def select_matches(params):
             result.append(0)
         __addon__.setSetting('selected_leagues', ','.join(str(x)
                                                           for x in result))
-        cache_file = os.path.join(xbmc.translatePath(
-            __addon__.getAddonInfo('profile')), '__cache__.pcl')
-        if os.path.exists(cache_file):
-            os.remove(cache_file)
-        root()
+        update_cache()                                        
+        # cache_file = os.path.join(xbmc.translatePath(
+        #     __addon__.getAddonInfo('profile')), '__cache__.pcl')
+        # if os.path.exists(cache_file):
+        #     os.remove(cache_file)
+        # root()
 
 
-@plugin.cached(__addon__.getSetting('time_caching_matches'))
+#@plugin.cached(__addon__.getSetting('time_caching_matches'))
+@plugin.cached(30)
 def get_matches():
     leagues = _load_leagues()
     LEAGUES_IMAGE = _load_leagues_image()
@@ -226,7 +238,8 @@ def get_matches():
     return matches
 
 
-@plugin.cached(__addon__.getSetting('time_caching_links'))
+#@plugin.cached(__addon__.getSetting('time_caching_links'))
+@plugin.cached(30)
 @plugin.action()
 def get_links(params):
 

@@ -6,8 +6,8 @@
 		<setting label="Часовой пояс сайта" type="labelenum" id="time_zone_site" values="-12|-11|-10|-9|-8|-7|-6|-5|-4|-3|-2|-1|0|1|2|3|4|5|6|7|8|9|10|11|12" default="3" />
 		<setting id="is_http_link" type="bool" label="Сканировать прямые ссылки на трансляции" default="true" visible="true"/>
 		<setting id="is_http_acesop" type="bool" label="Сканировать acestream и sopcast ссылки на трансляции" default="true" visible="true"/>
-		<setting id="time_caching_matches" default="10"  label="Время кеширования списка матчей" type="number" />
-		<setting id="time_caching_links" default="10"  label="Время кеширования списка ссылок" type="number" />
+		<setting id="time_caching_matches" default="10"  label="Время кеширования списка матчей" type="number" visible="false" />
+		<setting id="time_caching_links" default="10"  label="Время кеширования списка ссылок" type="number" visible="false"/>
 		<setting id="is_debug" type="bool" label="Включить отладочный режим" default="true"/>
 	</category>
 	<category label="AceStream">
