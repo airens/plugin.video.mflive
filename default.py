@@ -6,7 +6,7 @@ import xbmcplugin
 import xbmcgui
 import xbmcaddon
 import xbmc
-import BeautifulSoup
+import bs4
 from dateutil.tz import tzlocal, tzoffset
 import dateutil.parser
 import urllib2
@@ -69,7 +69,7 @@ def _load_leagues_image():
 
     html = _http_get(SITE + '/index/0-2')
 
-    soup = BeautifulSoup.BeautifulSoup(html)
+    soup = bs4.BeautifulSoup(html, 'html.parser')
 
     league_pictures = []
 
@@ -79,10 +79,7 @@ def _load_leagues_image():
     if matches_records_page:
         tags_a = matches_records_page.findAll('a')
         for a in tags_a:
-            src = SITE + dict(a.contents[0].attrs)['src'].encode('utf-8')
-            # dbg_log(src)
-            # dbg_log(type(src))
-            # dbg_log(repr(src))
+            src = SITE + dict(a.contents[0].attrs)['src'].encode('utf-8')            
             league_pictures.append(dict(league=a.parent.contents[2].text.encode('utf8'),
                                         src=src))
 
@@ -142,7 +139,7 @@ def select_matches(params):
         root()
 
 
-@plugin.cached(10)
+@plugin.cached(__addon__.getSetting('time_caching_matches'))
 def get_matches():
     leagues = _load_leagues()
     LEAGUES_IMAGE = _load_leagues_image()
@@ -154,7 +151,7 @@ def get_matches():
 #    tzl = 2
 
     now_date = datetime.datetime.now().replace(tzinfo=tzlocal())
-    soup = BeautifulSoup.BeautifulSoup(html)
+    soup = bs4.BeautifulSoup(html, 'html.parser')
     days = soup.findAll('div', {'class': 'rewievs_tab1'})
 
     for match_html in days:
@@ -215,7 +212,6 @@ def get_matches():
         icon = os.path.join(__path__, 'icon.png')
 
         for league_pictures in LEAGUES_IMAGE:
-            #if league_pictures['league'].strip() == league.decode('utf-8').upper().encode('utf-8'):
             if league_pictures['league'] == league:
                 icon = league_pictures['src']
 
@@ -230,7 +226,7 @@ def get_matches():
     return matches
 
 
-@plugin.cached(5)
+@plugin.cached(__addon__.getSetting('time_caching_links'))
 @plugin.action()
 def get_links(params):
 
@@ -243,7 +239,7 @@ def get_links(params):
     icon2 = ''
     command2 = ''
 
-    soup = BeautifulSoup.BeautifulSoup(html)
+    soup = bs4.BeautifulSoup(html, 'html.parser')
 
     stream_full_table_soup = soup.find(
         'table', {'class': 'stream-full-table stream-full-table1'})
@@ -265,71 +261,71 @@ def get_links(params):
         icon2 = stream_full2_soup.contents[0]['src'].encode('utf-8')
         command2 = stream_full2_soup.contents[0]['title'].encode('utf-8')
 
-    dbg_log(icon1)
-    dbg_log(command1)
-    dbg_log(type(icon2))
-    dbg_log(type(command2))
+    # dbg_log(icon1)
+    # dbg_log(command1)
+    # dbg_log(type(icon2))
+    # dbg_log(type(command2))
 
     plot_base = '%s\n%s\n%s - %s' % (span_soup[0].text.encode('utf-8'),
                                 span_soup[1].text.encode('utf-8'), command1, command2)
 
-    list_link_stream_soup = soup.findAll(
-        'table', {'class': 'list-link-stream'})
+    if __addon__.getSetting('is_http_acesop'):
+        list_link_stream_soup = soup.findAll(
+            'table', {'class': 'list-link-stream'})
 
-    #xbmcgui.Dialog().notification('Проверка ссылок:', command1 + ' - ' + command2, xbmcgui.NOTIFICATION_INFO, 5000)
+        #xbmcgui.Dialog().notification('Проверка ссылок:', command1 + ' - ' + command2, xbmcgui.NOTIFICATION_INFO, 5000)
 
-    if list_link_stream_soup:
+        if list_link_stream_soup:
 
-        links_font_soup = list_link_stream_soup[0].findAll(
-            'span', {'class': 'links-font'})
+            links_font_soup = list_link_stream_soup[0].findAll(
+                'span', {'class': 'links-font'})
 
-        for link_soup in links_font_soup:
-            bit_rate = link_soup.text.split('-')[1].strip().encode('utf-8')
-            href = link_soup.contents[0]['href'].encode('utf-8')
+            for link_soup in links_font_soup:
+                bit_rate = link_soup.text.split('-')[1].strip().encode('utf-8')
+                href = link_soup.contents[0]['href'].encode('utf-8')
 
-            urlprs = urlparse(href)
-
-            plot = plot_base
-
-            if urlprs.scheme == 'acestream':
-                icon = os.path.join(__media__, 'ace.png')
-            elif urlprs.scheme == 'sop':
-                icon = os.path.join(__media__, 'sop.png')
-                plot = plot_base + '\n\n\nДля просмотра SopCast необходим плагин Plexus'
-            else:
-                icon = os.path.join(__media__, 'http.png')
-
-            matches.append({'label': '%s - %s' % (urlprs.scheme, bit_rate),
-                            'info': {'video': {'title': command1 + ' - ' + command2, 'plot': plot}},
-                            'thumb': icon,
-                            'icon': icon,
-                            'fanart': params['image'],
-                            'art': {'clearart': params['image']},
-                            'url': plugin.get_url(action='play', url=href),
-                            'is_playable': True})
-            dbg_log(matches[-1])
-
-    plot = plot_base
-
-    iframe_soup = soup.findAll('iframe', {'rel': "nofollow"})
-    for s in iframe_soup:
-        html_frame = _http_get(s['src'])
-        if html_frame:
-            ilink = html_frame.find('var videoLink')
-            if ilink != -1:
-                i1 = html_frame.find('\'', ilink)
-                i2 = html_frame.find('\'', i1 + 1)
-                href = html_frame[i1+1:i2]
                 urlprs = urlparse(href)
-                matches.append({'label': '%s - прямая ссылка на видео...' % urlprs.scheme,
+
+                plot = plot_base
+
+                if urlprs.scheme == 'acestream':
+                    icon = os.path.join(__media__, 'ace.png')
+                elif urlprs.scheme == 'sop':
+                    icon = os.path.join(__media__, 'sop.png')
+                    plot = plot_base + '\n\n\nДля просмотра SopCast необходим плагин Plexus'
+                else:
+                    icon = os.path.join(__media__, 'http.png')
+
+                matches.append({'label': '%s - %s' % (urlprs.scheme, bit_rate),
                                 'info': {'video': {'title': command1 + ' - ' + command2, 'plot': plot}},
-                                'thumb': os.path.join(__media__, 'http.png'),
-                                'icon': os.path.join(__media__, 'http.png'),
+                                'thumb': icon,
+                                'icon': icon,
                                 'fanart': params['image'],
                                 'art': {'clearart': params['image']},
                                 'url': plugin.get_url(action='play', url=href),
                                 'is_playable': True})
-                dbg_log(matches[-1])
+
+    plot = plot_base
+
+    if __addon__.getSetting('is_http_link'):
+        iframe_soup = soup.findAll('iframe', {'rel': "nofollow"})
+        for s in iframe_soup:
+            html_frame = _http_get(s['src'])
+            if html_frame:
+                ilink = html_frame.find('var videoLink')
+                if ilink != -1:
+                    i1 = html_frame.find('\'', ilink)
+                    i2 = html_frame.find('\'', i1 + 1)
+                    href = html_frame[i1+1:i2]
+                    urlprs = urlparse(href)
+                    matches.append({'label': '%s - прямая ссылка на видео...' % urlprs.scheme,
+                                    'info': {'video': {'title': command1 + ' - ' + command2, 'plot': plot}},
+                                    'thumb': os.path.join(__media__, 'http.png'),
+                                    'icon': os.path.join(__media__, 'http.png'),
+                                    'fanart': params['image'],
+                                    'art': {'clearart': params['image']},
+                                    'url': plugin.get_url(action='play', url=href),
+                                    'is_playable': True})
 
     if not matches:
         matches.append({'label': 'Ссылок на трансляции нет, возможно появятся позже!',
