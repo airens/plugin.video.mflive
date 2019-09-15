@@ -79,7 +79,7 @@ def _load_league_image():
     if matches_records_page:
         tags_a = matches_records_page.findAll('a')
         for a in tags_a:
-            src = SITE + dict(a.contents[0].attrs)['src'].encode('utf-8')            
+            src = SITE + dict(a.contents[0].attrs)['src'].encode('utf-8')
             league_pictures.append(dict(league=a.parent.contents[2].text.encode('utf8'),
                                         src=src))
 
@@ -95,18 +95,20 @@ def _get_selected_leagues():
         sl = '0'
     return map(lambda x: int(x), sl.split(','))
 
-def _upper(t):    
-    RUS={"А":"а", "Б":"б", "В":"в", "Г":"г", "Д":"д", "Е":"е", "Ё":"ё", 
-        "Ж":"ж", "З":"з", "И":"и", "Й":"й", "К":"к", "Л":"л", "М":"м", 
-        "Н":"н", "О":"о", "П":"п", "Р":"р", "С":"с", "Т":"т", "У":"у", 
-        "Ф":"ф", "Х":"х", "Ц":"ц", "Ч":"ч", "Ш":"ш", "Щ":"щ", "Ъ":"ъ", 
-        "Ы":"ы", "Ь":"ь", "Э":"э", "Ю":"ю", "Я":"я"}
+
+def _upper(t):
+    RUS = {"А": "а", "Б": "б", "В": "в", "Г": "г", "Д": "д", "Е": "е", "Ё": "ё",
+           "Ж": "ж", "З": "з", "И": "и", "Й": "й", "К": "к", "Л": "л", "М": "м",
+           "Н": "н", "О": "о", "П": "п", "Р": "р", "С": "с", "Т": "т", "У": "у",
+           "Ф": "ф", "Х": "х", "Ц": "ц", "Ч": "ч", "Ш": "ш", "Щ": "щ", "Ъ": "ъ",
+           "Ы": "ы", "Ь": "ь", "Э": "э", "Ю": "ю", "Я": "я"}
 
     for i in RUS.keys():
-        t = t.replace(RUS[i],i)
-    for i in range (65, 90):
-        t = t.replace(chr(i+32),chr(i))
+        t = t.replace(RUS[i], i)
+    for i in range(65, 90):
+        t = t.replace(chr(i+32), chr(i))
     return t
+
 
 @plugin.action()
 def update_cache():
@@ -122,7 +124,7 @@ def root():
     matches = get_matches()
     select_item = [{'label': '[COLOR FF0084FF][B]ВЫБРАТЬ ТУРНИРЫ[/B][/COLOR]',
                     'url': plugin.get_url(action='select_matches')},
-                    {'label': '[COLOR FF0084FF][B]ОБНОВИТЬ[/B][/COLOR]',
+                   {'label': '[COLOR FF0084FF][B]ОБНОВИТЬ[/B][/COLOR]',
                     'url': plugin.get_url(action='update_cache')}, ]
     # return plugin.create_listing(select_item + matches, content='tvseries',
     #                              view_mode=55, sort_methods={'sortMethod': xbmcplugin.SORT_METHOD_NONE, 'label2Mask': '% J'})
@@ -142,15 +144,9 @@ def select_matches(params):
             result.append(0)
         __addon__.setSetting('selected_leagues', ','.join(str(x)
                                                           for x in result))
-        update_cache()                                        
-        # cache_file = os.path.join(xbmc.translatePath(
-        #     __addon__.getAddonInfo('profile')), '__cache__.pcl')
-        # if os.path.exists(cache_file):
-        #     os.remove(cache_file)
-        # root()
+        update_cache()
 
 
-#@plugin.cached(__addon__.getSetting('time_caching_matches'))
 @plugin.cached(30)
 def get_matches():
     leagues = _load_leagues()
@@ -229,7 +225,7 @@ def get_matches():
 
         matches.append({'label': label,
                         'thumb': icon,
-                        'fanart': os.path.join(__path__ , 'fanart.jpg'),
+                        'fanart': os.path.join(__path__, 'fanart.jpg'),
                         'info': {'video': {'title': plot, 'plot': plot}},
                         'icon': icon,
                         'url': plugin.get_url(action='get_links', url=url, image=icon)})
@@ -238,8 +234,6 @@ def get_matches():
     return matches
 
 
-#@plugin.cached(__addon__.getSetting('time_caching_links'))
-#@plugin.cached(30)
 @plugin.action()
 def get_links(params):
 
@@ -274,15 +268,10 @@ def get_links(params):
         icon2 = stream_full2_soup.contents[0]['src'].encode('utf-8')
         command2 = stream_full2_soup.contents[0]['title'].encode('utf-8')
 
-    # dbg_log(icon1)
-    # dbg_log(command1)
-    # dbg_log(type(icon2))
-    # dbg_log(type(command2))
-
     plot_base = '%s\n%s\n%s - %s' % (span_soup[0].text.encode('utf-8'),
-                                span_soup[1].text.encode('utf-8'), command1, command2)
+                                     span_soup[1].text.encode('utf-8'), command1, command2)
 
-    if __addon__.getSetting('is_http_acesop'):
+    if __addon__.getSetting('is_http_acesop') == 'true':
         list_link_stream_soup = soup.findAll(
             'table', {'class': 'list-link-stream'})
 
@@ -320,7 +309,7 @@ def get_links(params):
 
     plot = plot_base
 
-    if __addon__.getSetting('is_http_link'):
+    if __addon__.getSetting('is_http_link') == 'true':
         iframe_soup = soup.findAll('iframe', {'rel': "nofollow"})
         for s in iframe_soup:
             html_frame = _http_get(s['src'])
@@ -343,8 +332,6 @@ def get_links(params):
     if not matches:
         matches.append({'label': 'Ссылок на трансляции нет, возможно появятся позже!',
                         'info': {'video': {'title': '', 'plot': ''}},
-                        # 'thumb': icon2,
-                        # 'icon': params['image'],
                         'art': {'clearart': ''},
                         'url': plugin.get_url(action='play', url='https://www.ixbt.com/multimedia/video-methodology/camcorders-and-others/htc-one-x-avc-baseline@l3.2-1280x720-variable-fps-aac-2ch.mp4'),
                         'is_playable': True})
