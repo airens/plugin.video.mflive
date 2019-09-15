@@ -46,7 +46,7 @@ def _http_get(url):
         resp = urllib2.urlopen(req)
         http = resp.read()
         resp.close()
-        return html
+        return http
     except Exception, e:
         print('[%s]: GET EXCEPT [%s]' % (ID_PLUGIN, e), 4)
         print url
