@@ -227,7 +227,7 @@ def get_matches():
                         'thumb': icon,
                         'fanart': os.path.join(__path__, 'fanart.jpg'),
                         'info': {'video': {'title': plot, 'plot': plot}},
-                        'icon': icon,
+                        #'icon': icon,
                         'url': plugin.get_url(action='get_links', url=url, image=icon)})
         dbg_log(matches[-1])
 
@@ -259,14 +259,14 @@ def get_links(params):
     stream_full_soup = stream_full_table_soup.find(
         'td', {'class': 'stream-full'})
     if stream_full_soup:
-        icon1 = stream_full_soup.contents[0]['src'].encode('utf-8')
-        command1 = stream_full_soup.contents[0]['title'].encode('utf-8')
+        icon1 = stream_full_soup.find('img').attrs['src'].encode('utf-8')
+        command1 = stream_full_soup.find('img').attrs['title'].encode('utf-8')
 
     stream_full2_soup = stream_full_table_soup.find(
         'td', {'class': 'stream-full2'})
     if stream_full2_soup:
-        icon2 = stream_full2_soup.contents[0]['src'].encode('utf-8')
-        command2 = stream_full2_soup.contents[0]['title'].encode('utf-8')
+        icon2 = stream_full2_soup.find('img').attrs['src'].encode('utf-8')
+        command2 = stream_full2_soup.find('img').attrs['title'].encode('utf-8')
 
     plot_base = '%s\n%s\n%s - %s' % (span_soup[0].text.encode('utf-8'),
                                      span_soup[1].text.encode('utf-8'), command1, command2)
@@ -277,7 +277,7 @@ def get_links(params):
 
         for link_soup in links_font_soup:
             bit_rate = link_soup.text.split('-')[1].strip().encode('utf-8')
-            href = link_soup.contents[0]['href'].encode('utf-8')
+            href = link_soup.find('a').attrs['href'].encode('utf-8')
 
             urlprs = urlparse(href)
 
