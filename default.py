@@ -259,14 +259,14 @@ def get_links(params):
     stream_full_soup = stream_full_table_soup.find(
         'td', {'class': 'stream-full'})
     if stream_full_soup:
-        icon1 = stream_full_soup.find('img').attrs['src'].encode('utf-8')
-        command1 = stream_full_soup.find('img').attrs['title'].encode('utf-8')
+        icon1 = stream_full_soup.find('img')['src'].encode('utf-8')
+        command1 = stream_full_soup.find('img')['title'].encode('utf-8')
 
     stream_full2_soup = stream_full_table_soup.find(
         'td', {'class': 'stream-full2'})
     if stream_full2_soup:
-        icon2 = stream_full2_soup.find('img').attrs['src'].encode('utf-8')
-        command2 = stream_full2_soup.find('img').attrs['title'].encode('utf-8')
+        icon2 = stream_full2_soup.find('img')['src'].encode('utf-8')
+        command2 = stream_full2_soup.find('img')['title'].encode('utf-8')
 
     plot_base = '%s\n%s\n%s - %s' % (span_soup[0].text.encode('utf-8'),
                                      span_soup[1].text.encode('utf-8'), command1, command2)
