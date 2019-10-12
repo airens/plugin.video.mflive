@@ -79,15 +79,13 @@ def _load_league_image():
     if matches_records_page:
         tags_a = matches_records_page.findAll('a')
         for a in tags_a:
-            src = SITE + dict(a.contents[0].attrs)['src'].encode('utf-8')
-            league_pictures.append(dict(league=a.parent.contents[2].text.encode('utf8'),
-                                        src=src))
+            src = SITE + a.find('img')['src'].encode('utf-8')
+            league = a.parent.find('p').text.encode('utf8')
+            league_pictures.append(dict(league=league, src=src))
 
     return league_pictures
 
-
 plugin = Plugin()
-
 
 def _get_selected_leagues():
     sl = __addon__.getSetting('selected_leagues')
@@ -126,9 +124,9 @@ def root():
                     'url': plugin.get_url(action='select_matches')},
                    {'label': '[COLOR FF0084FF][B]ОБНОВИТЬ[/B][/COLOR]',
                     'url': plugin.get_url(action='update_cache')}, ]
-    # return plugin.create_listing(select_item + matches, content='tvseries',
-    #                              view_mode=55, sort_methods={'sortMethod': xbmcplugin.SORT_METHOD_NONE, 'label2Mask': '% J'})
-    return select_item + matches
+    return plugin.create_listing(select_item + matches, content='tvseries',
+                                  view_mode=55, sort_methods={'sortMethod': xbmcplugin.SORT_METHOD_NONE, 'label2Mask': '% J'})
+    #return select_item + matches
 
 
 @plugin.action()
@@ -164,19 +162,18 @@ def get_matches():
 
     for match_html in days:
 
-        url = match_html.contents[1]['href']
+        a = match_html.find('a')
+        url = a['href'].encode('utf-8')
+        title = a['title'].encode('utf-8')
 
         if url in urls:
             continue
         dbg_log(url)
         urls.add(url)
 
-        tbody = match_html.findAll('tbody')[1]
-        #image = tbody.contents[1].contents[1].contents[1]['src'].encode('utf-8')
-        #icon = SITE + image
-        game = tbody.contents[1].contents[3].text.encode('utf-8')
-        league = _upper(tbody.contents[1].contents[1].contents[1]['title'].encode(
-            'utf-8'))
+        td = a.findAll('td')        
+        game = td[-2].text.encode('utf-8')
+        league = _upper(a.find('img')['title'].encode('utf-8'))
         dbg_log(game)
         dbg_log(league)
         if league not in leagues:
@@ -196,7 +193,7 @@ def get_matches():
                 if not leagues.index(league) in selected_leagues:
                     continue
 
-        dts = tbody.contents[3].contents[1].contents[0].contents[1]['data-time']
+        dts = td[-1].find('span', {'class': 'time-for-replace'})['data-time']
         dt = dateutil.parser.parse(dts)
         tz = tzoffset(None, tzs * 3600)
         dt = dt.replace(tzinfo=tz)
@@ -215,7 +212,7 @@ def get_matches():
         label = '[COLOR %s]%s[/COLOR] - [B]%s[/B]     %s' % (
             status, date_time.strftime('%H:%M'), game, league)
         plot = '[B][UPPERCASE]%s[/B][/UPPERCASE]\n%s\n%s' % (
-            date_time.strftime('%H:%M - %d.%m.%Y'), league, game)
+            date_time.strftime('%H:%M - %d.%m.%Y'), league, title)
 
         icon = os.path.join(__path__, 'icon.png')
 
@@ -252,10 +249,6 @@ def get_links(params):
         'table', {'class': 'stream-full-table stream-full-table1'})
 
     span_soup = stream_full_table_soup.findAll('span')
-
-    #title = stream_full_table_soup.find('td', {'class': 'stream-full5'}).contents[1].text
-    # dbg_log(title.encode('utf8'))
-
     stream_full_soup = stream_full_table_soup.find(
         'td', {'class': 'stream-full'})
     if stream_full_soup:
