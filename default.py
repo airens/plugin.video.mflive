@@ -48,8 +48,8 @@ def _http_get(url):
         resp.close()
         return http
     except Exception, e:
-        print('[%s]: GET EXCEPT [%s]' % (ID_PLUGIN, e), 4)
-        print url
+        dbg_log('GET EXCEPT [%s]' % e)
+        dbg_log(url)
 
 
 def _load_leagues():
@@ -153,10 +153,12 @@ def get_matches():
     html = _http_get(SITE)
     matches = []
     urls = set()
-    tzs = int(__addon__.getSetting('time_zone_site'))
-#    tzl = 2
 
-    now_date = datetime.datetime.now().replace(tzinfo=tzlocal())
+#    tzs = int(__addon__.getSetting('time_zone_site'))
+#    tzl = 2
+#    now_date = datetime.datetime.now().replace(tzinfo=tzlocal())
+    now_date = datetime.datetime.now()
+
     soup = bs4.BeautifulSoup(html, 'html.parser')
     days = soup.findAll('div', {'class': 'rewievs_tab1'})
 
@@ -195,9 +197,13 @@ def get_matches():
 
         dts = td[-1].find('span', {'class': 'time-for-replace'})['data-time']
         dt = dateutil.parser.parse(dts)
-        tz = tzoffset(None, tzs * 3600)
-        dt = dt.replace(tzinfo=tz)
-        date_time = dt.astimezone(tzlocal())
+
+        # tz = tzoffset(None, tzs * 3600)
+        # dt = dt.replace(tzinfo=tz)
+        # date_time = dt.astimezone(tzlocal())
+
+        date_time = dt
+       
         dbg_log(date_time)
 
         before_time = int((date_time - now_date).total_seconds()/60)
