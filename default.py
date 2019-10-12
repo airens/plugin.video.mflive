@@ -124,9 +124,9 @@ def root():
                     'url': plugin.get_url(action='select_matches')},
                    {'label': '[COLOR FF0084FF][B]ОБНОВИТЬ[/B][/COLOR]',
                     'url': plugin.get_url(action='update_cache')}, ]
-    return plugin.create_listing(select_item + matches, content='tvseries',
-                                  view_mode=55, sort_methods={'sortMethod': xbmcplugin.SORT_METHOD_NONE, 'label2Mask': '% J'})
-    #return select_item + matches
+    #return plugin.create_listing(select_item + matches, content='tvseries',
+    #                              view_mode=55, sort_methods={'sortMethod': xbmcplugin.SORT_METHOD_NONE, 'label2Mask': '% J'})
+    return select_item + matches
 
 
 @plugin.action()
