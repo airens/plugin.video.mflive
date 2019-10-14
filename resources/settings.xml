@@ -7,6 +7,7 @@
 		<setting id="is_http_link" type="bool" label="Сканировать прямые ссылки на трансляции" default="true" visible="true"/>
 		<setting id="is_http_acesop" type="bool" label="Сканировать acestream и sopcast ссылки на трансляции" default="true" visible="true"/>		
 		<setting id="is_debug" type="bool" label="Включить отладочный режим" default="true"/>
+		<setting id="is_antizapret" type="bool" label="Разблокировка Антизапрет" default="false" visible='true'/>
 	</category>
 	<category label="AceStream">
 		<setting id="is_default_play" type="bool" label="Использовать движок по-умолчанию" default="false"/>

@@ -1,6 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import antizapret
 from simpleplugin import Plugin
 import xbmcplugin
 import xbmcgui
@@ -38,18 +39,43 @@ def dbg_log(line):
 
 def _http_get(url):
     try:
+        
         req = urllib2.Request(url=url)
         req.add_header('User-Agent',
-                       'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0; Mozilla/4.0'
-                       ' (compatible; MSIE 6.0; Windows NT 5.1; SV1) ; .NET CLR 1.1.4322; .NET CLR 2.0.50727; '
-                       '.NET CLR 3.0.4506.2152; .NET CLR 3.5.30729; .NET4.0C)')
-        resp = urllib2.urlopen(req)
-        http = resp.read()
-        resp.close()
-        return http
-    except Exception, e:
-        dbg_log('GET EXCEPT [%s]' % e)
-        dbg_log(url)
+                    'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0; Mozilla/4.0'
+                    ' (compatible; MSIE 6.0; Windows NT 5.1; SV1) ; .NET CLR 1.1.4322; .NET CLR 2.0.50727; '
+                    '.NET CLR 3.0.4506.2152; .NET CLR 3.5.30729; .NET4.0C)')
+
+        if __addon__.getSetting('is_antizapret') == 'true':
+            urllib2.install_opener(urllib2.build_opener(
+                antizapret.AntizapretProxyHandler()))
+        
+        response = urllib2.urlopen(req)
+
+        # URL из запроса
+        dbg_log("The URL is: %s" % response.geturl())
+        # Ответ сервера
+        code = response.code
+        dbg_log("This gets the code: %s" % response.code)
+        if code != 200:
+            raise Exception('Ошибка (%s) в %s ' % (code, url))
+        # Заголовки ответа в виде словаря
+        dbg_log("The Headers are: %s" % response.info())
+        # Достаем дату сервера из заголовков ответа
+        dbg_log("The Date is: %s" % response.info()['date'])
+        # Получаем заголовок 'server' из заголовков
+        dbg_log("The Server is: %s" % response.info()['server'])
+        # Получаем весь html страницы
+        html = response.read()
+        #dbg_log("Get all data: %s" % html)
+        # Узнаем длину страницу
+        dbg_log("Get the length :%s" % len(html))
+        response.close()
+        return html
+    except Exception as e:
+        xbmcgui.Dialog().notification('Ошибка запроса', str(e), xbmcgui.NOTIFICATION_ERROR, 10000)
+        err = '*** HTTP ERROR: %s - url: %s ' % (str(e), url)
+        dbg_log(err)
 
 
 def _load_leagues():
@@ -70,6 +96,7 @@ def _load_league_image():
     html = _http_get(SITE + '/index/0-2')
 
     soup = bs4.BeautifulSoup(html, 'html.parser')
+    #dbg_log('bs4.BeautifulSoup _load_league_image - %s' % soup)
 
     league_pictures = []
 
@@ -160,6 +187,7 @@ def get_matches():
     now_date = datetime.datetime.now()
 
     soup = bs4.BeautifulSoup(html, 'html.parser')
+    #dbg_log('bs4.BeautifulSoup get_matches() - %s' % soup)
     days = soup.findAll('div', {'class': 'rewievs_tab1'})
 
     for match_html in days:
@@ -249,8 +277,8 @@ def get_links(params):
     icon2 = ''
     command2 = ''
 
-    soup = bs4.BeautifulSoup(html, 'html.parser')
-
+    soup = bs4.BeautifulSoup(html, 'html.parser')    
+    #dbg_log('bs4.BeautifulSoup get_links(params) - %s' % soup)
     stream_full_table_soup = soup.find(
         'table', {'class': 'stream-full-table stream-full-table1'})
 
@@ -270,8 +298,7 @@ def get_links(params):
     plot_base = '%s\n%s\n%s - %s' % (span_soup[0].text.encode('utf-8'),
                                      span_soup[1].text.encode('utf-8'), command1, command2)
 
-    if __addon__.getSetting('is_http_acesop') == 'true':
-        #xbmcgui.Dialog().notification('Проверка ссылок:', command1 + ' - ' + command2, xbmcgui.NOTIFICATION_INFO, 5000)
+    if __addon__.getSetting('is_http_acesop') == 'true':        
         links_font_soup = soup.findAll('span', {'class': 'links-font'})
 
         for link_soup in links_font_soup:
