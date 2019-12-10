@@ -11,9 +11,11 @@
 		<setting id="reset" option="close" type="action" label="Полное обновление данных" action="RunPlugin(plugin://plugin.video.mflive?action=reset)" />
 	</category>
 	<category label="Парсинг">
-		<setting id="is_poster" type="bool" label="Создавать постеры" default="false" visible="true"/>
-		<setting id="is_thumb" type="bool" label="Создавать миниатюры" default="false" visible="true"/>
-		<setting id="is_fanart" type="bool" label="Создавать фанарты" default="false" visible="true"/>
+		<setting id="is_poster" type="bool" label="Создавать постеры" default="false" visible="false"/>
+		<setting id="is_thumb" type="bool" label="Создавать миниатюры" default="false" visible="false"/>
+		<setting id="is_fanart" type="bool" label="Создавать фанарты" default="false" visible="false"/>
+		<setting id="is_http_link" type="bool" label="Сканировать прямые ссылки на трансляции" default="true" visible="true"/>
+		<setting id="is_http_acesop" type="bool" label="Сканировать acestream и sopcast ссылки на трансляции" default="true" visible="true"/>	
 		<setting id="is_pars_links" type="bool" label="Парсить ссылки" default="false" visible="true"/>
         <setting id="delta_scan" type="number" label="Период обновления данных, мин." default="120" visible="true"/>
 		<setting id="delta_links" type="number" label="Время до матча для обязательного парсинга ссылок, мин." default="30" visible="true"/>
