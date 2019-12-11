@@ -2,7 +2,7 @@
 
 import os
 import xbmc
-import xbmcgui
+# mport xbmcgui
 # import xbmcaddon
 
 
