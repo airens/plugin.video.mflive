@@ -6,7 +6,9 @@
 		<setting label="Часовой пояс сайта" type="labelenum" id="time_zone_site" values="-12|-11|-10|-9|-8|-7|-6|-5|-4|-3|-2|-1|0|1|2|3|4|5|6|7|8|9|10|11|12" default="3" />
 		<setting id="is_play" type="bool" label="Воспроизвести сразу без выбора ссылок" default="false" visible="false"/>
 		<setting label="Ссылка по умолчанию для воспроизведения" type="labelenum" id="play_engine" values="Ace Stream|SopCast" default="Ace Stream" visible="eq(-1,true)" />
-		<setting id="is_noold_item" type="bool" label="Не показывать прошедшие матчи (более 3 час.)" default="true" visible="true"/>        
+		<setting id="is_noold_item" type="bool" label="Не показывать прошедшие матчи (более 3 час.)" default="true" visible="true"/>
+		<setting id="is_date_item" type="bool" label="Показывать дату в элементе списка" default="true" visible="true"/>        
+		<setting id="is_league_item" type="bool" label="Показывать турнир в элементе списка" default="true" visible="true"/>        
         <setting id="is_debug" type="bool" label="Включить отладочный режим" default="true" visible="false"/>
 		<setting id="reset" option="close" type="action" label="Полное обновление данных" action="RunPlugin(plugin://plugin.video.mflive?action=reset)" />
 	</category>
@@ -34,5 +36,9 @@
 		<setting type="sep"/>
 		<setting type="lsep" label='HTTPAceProxy'/>
 		<setting label = "IP"  type = "ipaddress"  id = "ipproxy" default='127.0.0.1' />
+	</category>
+	<category label="Сервис">
+		<setting id="scan_service" type="number" label="Период обновления в фоновом режиме, мин." default="180" visible="true"/>
+		<setting type="lsep" label='For the service settings to take effect, you must restart Kodi !'/>
 	</category>
 </settings>

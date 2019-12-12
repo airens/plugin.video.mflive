@@ -364,8 +364,8 @@ class MFLive(Plugin):
                 title = u'[COLOR %s]%s[/COLOR]\n[B]%s[/B]\n[UPPERCASE]%s[/UPPERCASE]' % (
                     status, self.time_to_local(date_).strftime('%d.%m %H:%M'), item['label'], item['league'])
 
-                label = u'[COLOR %s]%s[/COLOR] - [B]%s[/B]' % (
-                    status, self.time_to_local(date_).strftime('%H:%M'), item['label'])
+                label = u'[COLOR %s]%s[/COLOR] - [B]%s[/B]    %s' % (status, self.time_to_local(date_).strftime(
+                    u'%d.%m %H:%M' if self.get_setting('is_date_item') else u'%H:%M'), item['label'], item['league'] if self.get_setting('is_league_item') else '')
 
                 plot = title + '\n' + plot + '\n\n' + self._site
 
