@@ -132,7 +132,7 @@ class Plugin(simpleplugin.Plugin):
         ]
         """
         pass
-   
+
     @property
     def date_scan(self):
         return self._date_scan
@@ -190,7 +190,7 @@ class Plugin(simpleplugin.Plugin):
                      'art': {'icon': self.icon, 'thumb': self.icon, },
                      'url': self.get_url(action='play',
                                          href='https://www.ixbt.com/multimedia/video-methodology/'
-                                              'bitrates/avc-1080-25p/1080-25p-10mbps.mp4'),
+                                         'bitrates/avc-1080-25p/1080-25p-10mbps.mp4'),
                      'is_playable': True}]
 
         return self._get_links(id, links)
@@ -308,7 +308,8 @@ class Plugin(simpleplugin.Plugin):
 
         self.log('***** 5')
 
-        self._listing = OrderedDict(sorted(self._listing.items(), key=lambda t: t[1]['date']))
+        self._listing = OrderedDict(
+            sorted(self._listing.items(), key=lambda t: t[1]['date']))
 
         self._date_scan = self.time_now_utc()
         self.dump()
@@ -358,6 +359,7 @@ class Plugin(simpleplugin.Plugin):
         """
         path = ''
         msg = ''
+
         self.logd('play', params)
         if 'href' not in params or not params['href']:
             links = self.links(int(params['id']), isdump=True)
@@ -376,6 +378,66 @@ class Plugin(simpleplugin.Plugin):
         url = urlparse(href)
         if url.scheme == 'acestream':
             path = self.get_path_acestream(href)
+            if not path:
+                return None
+            try:
+                if urlparse(path).port == 6878:
+                    progress = xbmcgui.DialogProgressBG()
+                    progress.create('Ace Stream Engine', self.name)
+
+                    self.log('start acestream play')
+
+                    as_url = 'http://' + '127.0.0.1' + ':' + '6878' + '/ace/getstream?id=' + \
+                        urlparse(href).netloc + \
+                        "&format=json"  # &_idx=" + str(ep)
+
+                    json = eval(self.http_get(as_url).replace(
+                        'null', '"null"'))["response"]
+                    self.log(type(json))
+                    self.log(json)
+                    stat_url = json["stat_url"]
+                    self.logd('stat_url', stat_url)
+                    stop_url = json["command_url"] + '?method=stop'
+                    self.logd('stop_url', stop_url)
+                    purl = json["playback_url"]
+                    self.logd('purl', purl)
+
+                    for i in range(30):
+                        xbmc.sleep(1000)
+                        j = eval(self.http_get(stat_url).replace(
+                            'null', '"null"'))["response"]
+                        if j == {}:
+                            progress.update(i*3, message=u'ожидание...')
+                        else:
+
+                            status = j['status']
+                            if status == 'dl':
+                                progress.update(
+                                    i*3,  message=u'воспроизведение...')
+                                xbmc.sleep(1000)
+                                break
+                            progress.update(i*3, message=u'пребуферизация...')
+                            self.logd('get stat acestream - ', j)
+                            msg = 'seeds - %s speed - %s download - %s' % (
+                                str(j['peers']), str(j['speed_down']), str(j['downloaded']/1024))
+                            progress.update(i*3, msg)
+
+                    if i == 30:
+                        xbmcgui.Dialog().notification(self.name, 'STOP ACESTREAM', self.icon, 500)
+                        self.http_get(stop_url)
+
+                    progress.close()
+                    xbmc.sleep(1000)
+                    path = purl
+            except Exception as e:
+                xbmcgui.Dialog().notification(
+                    self.name, 'Torrent not available or invalid!', self.icon, 500)
+                self.logd('error acestream (%s)' %
+                          str(e), 'Torrent not available or invalid!')
+                if progress:
+                    progress.close()
+                return None
+
         elif url.scheme == 'sop':
             path = self.get_path_sopcast(href)
         else:
@@ -530,7 +592,8 @@ class Plugin(simpleplugin.Plugin):
                 'ACESTREAM %s [%s]' % ('hls' if self.get_setting(
                     'is_hls2') else '', self.get_setting('ipace2')),
                 'HTTPAceProxy [%s]' % self.get_setting('ipproxy'),
-                'Add-on TAM [127.0.0.1]']
+                'Add-on TAM [127.0.0.1]',
+                'Add-on Plexus']
 
             if self.version_kodi < 17:
                 item = dialog.select(
@@ -556,6 +619,9 @@ class Plugin(simpleplugin.Plugin):
                 self.get_setting('ipproxy'), cid)
         elif item == 3:
             path = "plugin://plugin.video.tam/?mode=play&url=%s&engine=ace_proxy" % href
+        elif item == 4:
+            path = "plugin://program.plexus/?mode=1&url=" + \
+                url.geturl() + "&name=My+acestream+channel"
 
         return path
 

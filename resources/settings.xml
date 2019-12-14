@@ -24,7 +24,7 @@
 	</category>
 	<category label="AceStream"> 
 		<setting id="is_default_ace" type="bool" label="Использовать по-умолчанию способ воспроизведения AceStream" default="false"/>
-		<setting label="Движок по-умолчанию" visible="true" type="enum" id="default_ace" values="Ace Stream Engine #1|Ace Stream Engine #2|HTTPAceProxy|TAM" default="Ace Stream Engine #1" />
+		<setting label="Движок по-умолчанию" visible="eq(-1,true)" type="enum" id="default_ace" values="Ace Stream Engine #1|Ace Stream Engine #2|HTTPAceProxy|TAM|Plexus" default="Ace Stream Engine #1" />
 		<setting type="sep"/>
 		<setting type="lsep" label='Ace Stream Engine #1'/>
 		<setting label = "IP"  type = "ipaddress"  id = "ipace1" default='127.0.0.1' />
