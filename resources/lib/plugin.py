@@ -247,13 +247,18 @@ class Plugin(simpleplugin.Plugin):
 
         html = self.http_get(self._site)
 
-        self.log('***** 1')
+        self.log('***** 1')        
 
         self._listing = self._parse_listing(html, progress=self._progress)
 
         self.log('***** 2')
 
         if not self._listing:
+            try:
+                if self._progress:
+                    self._progress.close()
+            except:
+                pass
             self.logd('update', 'self._listing None')
             return
 
