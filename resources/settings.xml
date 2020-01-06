@@ -38,7 +38,8 @@
 		<setting label = "IP"  type = "ipaddress"  id = "ipproxy" default='127.0.0.1' />
 	</category>
 	<category label="Сервис">
-		<setting id="scan_service" type="number" label="Период обновления в фоновом режиме, мин." default="180" visible="true"/>
+		<setting id="is_update_service" type="bool" label="Включить фоновое обновление данных" default="false" visible="true"/>
+		<setting id="scan_service" type="number" label="Период обновления в фоновом режиме, мин." default="180" visible="eq(-1,true)"/>
 		<setting type="lsep" label='For the service settings to take effect, you must restart Kodi !'/>
 	</category>
 </settings>

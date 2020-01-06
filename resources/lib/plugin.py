@@ -47,6 +47,8 @@ class Plugin(simpleplugin.Plugin):
         self._date_scan = None  # Время сканирования в utc
         self._listing = OrderedDict()
 
+        self._progress = xbmcgui.DialogProgressBG()
+
         self.load()
 
     @staticmethod
@@ -164,7 +166,7 @@ class Plugin(simpleplugin.Plugin):
                                    content='movies',
                                    sort_methods=(
                                        xbmcplugin.SORT_METHOD_DATEADDED, xbmcplugin.SORT_METHOD_VIDEO_RATING),
-                                   cache_to_disk=True)
+                                   cache_to_disk=False)
 
     def get_listing(self):
         """
@@ -190,7 +192,7 @@ class Plugin(simpleplugin.Plugin):
                      'art': {'icon': self.icon, 'thumb': self.icon, },
                      'url': self.get_url(action='play',
                                          href='https://www.ixbt.com/multimedia/video-methodology/'
-                                         'bitrates/avc-1080-25p/1080-25p-10mbps.mp4'),
+                                              'bitrates/avc-1080-25p/1080-25p-10mbps.mp4'),
                      'is_playable': True}]
 
         return self._get_links(id, links)
@@ -237,19 +239,17 @@ class Plugin(simpleplugin.Plugin):
         if not self.is_update():
             return
 
-        progress = xbmcgui.DialogProgressBG()
-
-        progress.create(self.name, 'ОБНОВЛЕНИЕ ДАННЫХ ...')
+        self._progress.create(self.name, 'ОБНОВЛЕНИЕ ДАННЫХ ...')
 
         self.log('START UPDATE')
 
-        progress.update(10, message='Загрузка данных сайта')
+        self._progress.update(10, message='Загрузка данных сайта')
 
         html = self.http_get(self._site)
 
         self.log('***** 1')
 
-        self._listing = self._parse_listing(html, progress=progress)
+        self._listing = self._parse_listing(html, progress=self._progress)
 
         self.log('***** 2')
 
@@ -284,8 +284,8 @@ class Plugin(simpleplugin.Plugin):
             i = (40 // len(self._listing)) if len(self._listing) else 2
             for val in self._listing.values():
                 percent += i
-                progress.update(percent, '%s: cканирование ссылок' %
-                                self.name, val['label'])
+                self._progress.update(percent, '%s: cканирование ссылок' %
+                                      self.name, val['label'])
                 self.links(val['id'], isdump=False)
 
         self.log('***** 4')
@@ -314,12 +314,16 @@ class Plugin(simpleplugin.Plugin):
         self._date_scan = self.time_now_utc()
         self.dump()
         self.log('STOP UPDATE')
-        progress.update(100, self.name, 'Завершение обновлений...')
+        self._progress.update(100, self.name, 'Завершение обновлений...')
         xbmc.sleep(2)
 
         self.log('***** 6')
 
-        progress.close()
+        try:
+            if self._progress:
+                self._progress.close()
+        except:
+            pass
 
     def is_update(self):
         """
@@ -387,9 +391,9 @@ class Plugin(simpleplugin.Plugin):
 
                     self.log('start acestream play')
 
-                    as_url = 'http://' + '127.0.0.1' + ':' + '6878' + '/ace/getstream?id=' + \
-                        urlparse(href).netloc + \
-                        "&format=json"  # &_idx=" + str(ep)
+                    as_url = 'http://' + urlparse(path).hostname + ':' + '6878' + '/ace/getstream?id=' + \
+                             urlparse(href).netloc + \
+                             "&format=json"  # &_idx=" + str(ep)
 
                     json = eval(self.http_get(as_url).replace(
                         'null', '"null"'))["response"]
@@ -407,23 +411,23 @@ class Plugin(simpleplugin.Plugin):
                         j = eval(self.http_get(stat_url).replace(
                             'null', '"null"'))["response"]
                         if j == {}:
-                            progress.update(i*3, message=u'ожидание...')
+                            progress.update(i * 3, message=u'ожидание...')
                         else:
 
                             status = j['status']
                             if status == 'dl':
                                 progress.update(
-                                    i*3,  message=u'воспроизведение...')
+                                    i * 3, message=u'воспроизведение...')
                                 xbmc.sleep(1000)
                                 break
-                            progress.update(i*3, message=u'пребуферизация...')
+                            progress.update(i * 3, message=u'пребуферизация...')
                             self.logd('get stat acestream - ', j)
                             msg = 'seeds - %s speed - %s download - %s' % (
-                                str(j['peers']), str(j['speed_down']), str(j['downloaded']/1024))
-                            progress.update(i*3, msg)
+                                str(j['peers']), str(j['speed_down']), str(j['downloaded'] / 1024))
+                            progress.update(i * 3, msg)
 
                     if i == 30:
-                        xbmcgui.Dialog().notification(self.name, 'STOP ACESTREAM', self.icon, 500)
+                        xbmcgui.Dialog().notification(self.name, 'Torrent not available or invalid!', self.icon, 500)
                         self.http_get(stop_url)
 
                     progress.close()
@@ -444,7 +448,7 @@ class Plugin(simpleplugin.Plugin):
             path = url.geturl()
 
         if not path:
-            msg = 'ПУСТОЙ ПУТЬ НА ТРАНСЛЯЦИЮ МАТЧА!'
+            msg = 'Torrent not available or invalid!'
             xbmcgui.Dialog().notification(self.name, msg, self.icon, 500)
             self.logd('play', msg)
             return None
@@ -621,7 +625,7 @@ class Plugin(simpleplugin.Plugin):
             path = "plugin://plugin.video.tam/?mode=play&url=%s&engine=ace_proxy" % href
         elif item == 4:
             path = "plugin://program.plexus/?mode=1&url=" + \
-                url.geturl() + "&name=My+acestream+channel"
+                   url.geturl() + "&name=My+acestream+channel"
 
         return path
 
