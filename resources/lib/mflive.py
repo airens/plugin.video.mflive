@@ -257,44 +257,57 @@ class MFLive(Plugin):
                                          span_soup[1].text.encode('utf-8'), command1, command2)
 
         if self.get_setting('is_http_acesop'):
-            links_font_soup = soup.findAll('span', {'class': 'links-font'})
+            list_link_stream_soup = soup.find('table', {'class': 'list-link-stream box-shadow-stream'})
+            if list_link_stream_soup is not None:
+                tr_soup = list_link_stream_soup.findAll('tr')
+                a_all = tr_soup[-1].findAll('a')
 
-            for link_soup in links_font_soup:
-                bit_rate = link_soup.text.split('-')[1].strip().encode('utf-8')
-                href = link_soup.find('a').attrs['href'].encode('utf-8')
+                for a in a_all:
+                    bit_rate = a.text.encode('utf-8')
+                    href = a['href'].encode('utf-8')
 
-                urlprs = urlparse(href)
+                    urlprs = urlparse(href)
 
-                links.append({
-                    'icon1': icon1,
-                    'command1': command1,
-                    'icon2': icon2,
-                    'command2': command2,
-                    'label': '%s - %s' % (urlprs.scheme, bit_rate),
-                    'bit_rate': bit_rate,
-                    'href': href,
-                })
+                    links.append({
+                        'icon1': icon1,
+                        'command1': command1,
+                        'icon2': icon2,
+                        'command2': command2,
+                        'label': '%s - %s' % (urlprs.scheme, bit_rate),
+                        'bit_rate': bit_rate,
+                        'href': href,
+                    })
 
         if self.get_setting('is_http_link'):
             iframe_soup = soup.findAll('iframe', {'rel': "nofollow"})
             for s in iframe_soup:
-                html_frame = self.http_get(s['src'])
-                if html_frame:
-                    ilink = html_frame.find('var videoLink')
-                    if ilink != -1:
-                        i1 = html_frame.find('\'', ilink)
-                        i2 = html_frame.find('\'', i1 + 1)
-                        href = html_frame[i1+1:i2]
-                        urlprs = urlparse(href)
-                        links.append({
-                            'icon1': icon1,
-                            'command1': command1,
-                            'icon2': icon2,
-                            'command2': command2,
-                            'label': '%s - прямая ссылка на видео...' % urlprs.scheme,
-                            'bit_rate': '',
-                            'href': href,
-                        })
+                href = ''
+                scheme = urlparse(s['data-src']).scheme
+                netloc = urlparse(s['data-src']).netloc
+                path = urlparse(s['data-src']).path
+                if netloc == 'www.youtube.com':
+                    href='plugin://plugin.video.youtube/play/?video_id={}'.format(path.split('/')[-1])
+                else:
+                    html_frame = self.http_get(s['data-src'])
+                    if html_frame:
+                        html_frame = str(html_frame)
+                        ilink = html_frame.find('var videoLink')
+                        if ilink != -1:
+                            i1 = html_frame.find('\'', ilink)
+                            i2 = html_frame.find('\'', i1 + 1)
+                            href = html_frame[i1+1:i2]
+                            urlprs = urlparse(href)
+                            href = scheme + '://' + netloc + href if not urlprs.scheme else href
+                if href:
+                    links.append({
+                        'icon1': icon1,
+                        'command1': command1,
+                        'icon2': icon2,
+                        'command2': command2,
+                        'label': u'%s - прямая ссылка на видео (%s)' % (scheme, netloc.encode('utf-8')),
+                        'bit_rate': '',
+                        'href': href, 
+                    })
 
         return links
 

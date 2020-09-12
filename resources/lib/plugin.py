@@ -243,7 +243,7 @@ class Plugin(simpleplugin.Plugin):
 
         self.log('START UPDATE')
 
-        self._progress.update(10, message='Загрузка данных сайта')
+        self._progress.update(1, message='Загрузка данных сайта')
 
         html = self.http_get(self._site)
 

@@ -19,7 +19,7 @@
 		<setting id="is_http_link" type="bool" label="Сканировать прямые ссылки на трансляции" default="true" visible="true"/>
 		<setting id="is_http_acesop" type="bool" label="Сканировать acestream и sopcast ссылки на трансляции" default="true" visible="true"/>	
 		<setting id="is_pars_links" type="bool" label="Парсить ссылки" default="false" visible="true"/>
-        <setting id="delta_scan" type="number" label="Период обновления данных, мин." default="120" visible="true"/>
+        <setting id="delta_scan" type="number" label="Период обновления данных, мин." default="10" visible="true"/>
 		<setting id="delta_links" type="number" label="Время до матча для обязательного парсинга ссылок, мин." default="30" visible="true"/>
 	</category>
 	<category label="AceStream"> 
