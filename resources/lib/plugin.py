@@ -7,6 +7,8 @@ from abc import abstractmethod
 from collections import OrderedDict
 
 import urllib2
+import socket
+import socks
 import xbmc
 import xbmcgui
 import xbmcplugin
@@ -43,6 +45,7 @@ class Plugin(simpleplugin.Plugin):
         self._listing_pickle = os.path.join(self.config_dir, LISTING_PICKLE)
         self.settings_changed = False
         self.stop_update = False
+        self._saved_socket = socket.socket
 
         self._date_scan = None  # Время сканирования в utc
         self._listing = OrderedDict()
@@ -50,6 +53,9 @@ class Plugin(simpleplugin.Plugin):
         self._progress = xbmcgui.DialogProgressBG()
 
         self.load()
+
+    def __del__(self):
+        socket.socket = self._saved_socket
 
     @staticmethod
     def format_timedelta(dt, pref):
@@ -526,6 +532,20 @@ class Plugin(simpleplugin.Plugin):
 
     def http_get(self, url):
         try:
+            if self._site in url:
+                proxy_type = self.get_setting("proxy_type")
+                if proxy_type != "Нет":
+                    proxy_address = self.get_setting("proxy_address")
+                    proxy_port = self.get_setting("proxy_port")
+                    proxy_username = self.get_setting("proxy_username")
+                    proxy_password = self.get_setting("proxy_password")
+                    if not proxy_username or not proxy_password:
+                        proxy_username = proxy_password = None
+                    proxy_type = socks.SOCKS5 if proxy_type == "SOCKS5" else \
+                        (socks.SOCKS4 if proxy_type == "SOCKS4" else socks.HTTP)
+                    socks.set_default_proxy(proxy_type, proxy_address, proxy_port, True, proxy_username, proxy_password)
+            else:
+                socket.socket = self._saved_socket
             req = urllib2.Request(url=url)
             req.add_header('User-Agent',
                            'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0; Mozilla/4.0'
